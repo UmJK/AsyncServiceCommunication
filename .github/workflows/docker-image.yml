@@ -28,6 +28,7 @@ jobs:
         with:
           username: umjk
           password: dckr_pat_GRgPFh-2aHqVTLsb7hd92zJwj3U
+
       - name: Build and Push Docker image
         uses: docker/build-push-action@v5
         with:
