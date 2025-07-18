@@ -1,5 +1,14 @@
-FROM openjdk:17-jdk-slim
+# Use lightweight, secure base image with better performance and smaller size
+FROM eclipse-temurin:17-jdk-alpine
+
+# Set working directory
 WORKDIR /app
-COPY ./build/libs/ev-charging-ktor-0.0.1-all.jar app.jar
+
+# Copy built JAR artifact
+COPY build/libs/*.jar app.jar
+
+# Expose application port
 EXPOSE 8080
-CMD ["java", "-jar", "app.jar"]
+
+# Start the application
+ENTRYPOINT ["java", "-jar", "app.jar"]
