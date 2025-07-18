@@ -150,7 +150,17 @@ logging {
   level = INFO
 }
 ```
+**PUSH/PULL TAGS**
+docker login -u <username> //docker login -u umjk    
+docker tag asyncservicecommunication:chargepoint
+docker push <username>/asyncservicecommunication:chargepoint //docker push umjk/asyncservicecommunication:chargepoint
 
+**FIND IMAGE**
+docker images | grep asyncservicecommunication
+
+otherwise
+docker build -t asyncservicecommunication:chargepoint .
+docker tag asyncservicecommunication:chargepoint umjk/asyncservicecommunication:chargepoint
 ---
 
 ## 9. Extensibility Plan
