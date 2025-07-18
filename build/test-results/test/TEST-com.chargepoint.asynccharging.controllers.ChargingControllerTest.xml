@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.chargepoint.asynccharging.controllers.ChargingControllerTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2025-07-18T09:54:51" hostname="Umakants-MacBook-Air.local" time="0.178">
+  <properties/>
+  <testcase name="should reject invalid UUID()" classname="com.chargepoint.asynccharging.controllers.ChargingControllerTest" time="0.17"/>
+  <testcase name="should accept valid charging request()" classname="com.chargepoint.asynccharging.controllers.ChargingControllerTest" time="0.007"/>
+  <system-out><![CDATA[2025-07-18 15:24:51,942 [DefaultDispatcher-worker-1 @call-context#8] INFO  ktor.test - No ktor.deployment.watch patterns specified, automatic reload is not active.
+2025-07-18 15:24:51,949 [DefaultDispatcher-worker-1 @call-context#8] INFO  ktor.test - Application started in 0.008 seconds.
+2025-07-18 15:24:51,954 [DefaultDispatcher-worker-2 @coroutine#10] INFO  ktor.test - Responding at http://localhost:80
+2025-07-18 15:24:51,955 [DefaultDispatcher-worker-2 @coroutine#10] INFO  ktor.test - Responding at https://localhost:443
+2025-07-18 15:24:52,058 [DefaultDispatcher-worker-3 @call-context#16] INFO  ktor.test - No ktor.deployment.watch patterns specified, automatic reload is not active.
+2025-07-18 15:24:52,059 [DefaultDispatcher-worker-3 @call-context#16] INFO  ktor.test - Application started in 0.0 seconds.
+2025-07-18 15:24:52,059 [DefaultDispatcher-worker-1 @coroutine#18] INFO  ktor.test - Responding at http://localhost:80
+2025-07-18 15:24:52,059 [DefaultDispatcher-worker-1 @coroutine#18] INFO  ktor.test - Responding at https://localhost:443
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

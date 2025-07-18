@@ -1,0 +1,13 @@
+¤2025-07-18 15:24:51,201 [DefaultDispatcher-worker-1 @call-context#2] INFO  ktor.test - No ktor.deployment.watch patterns specified, automatic reload is not active.
+}2025-07-18 15:24:51,658 [DefaultDispatcher-worker-1 @call-context#2] INFO  ktor.test - Application started in 0.464 seconds.
+v2025-07-18 15:24:51,665 [DefaultDispatcher-worker-2 @coroutine#4] INFO  ktor.test - Responding at http://localhost:80
+x2025-07-18 15:24:51,666 [DefaultDispatcher-worker-2 @coroutine#4] INFO  ktor.test - Responding at https://localhost:443
+¤2025-07-18 15:24:51,942 [DefaultDispatcher-worker-1 @call-context#8] INFO  ktor.test - No ktor.deployment.watch patterns specified, automatic reload is not active.
+}2025-07-18 15:24:51,949 [DefaultDispatcher-worker-1 @call-context#8] INFO  ktor.test - Application started in 0.008 seconds.
+w2025-07-18 15:24:51,954 [DefaultDispatcher-worker-2 @coroutine#10] INFO  ktor.test - Responding at http://localhost:80
+y2025-07-18 15:24:51,955 [DefaultDispatcher-worker-2 @coroutine#10] INFO  ktor.test - Responding at https://localhost:443
+¥2025-07-18 15:24:52,058 [DefaultDispatcher-worker-3 @call-context#16] INFO  ktor.test - No ktor.deployment.watch patterns specified, automatic reload is not active.
+|2025-07-18 15:24:52,059 [DefaultDispatcher-worker-3 @call-context#16] INFO  ktor.test - Application started in 0.0 seconds.
+w2025-07-18 15:24:52,059 [DefaultDispatcher-worker-1 @coroutine#18] INFO  ktor.test - Responding at http://localhost:80
+y2025-07-18 15:24:52,059 [DefaultDispatcher-worker-1 @coroutine#18] INFO  ktor.test - Responding at https://localhost:443
+­2025-07-18 15:24:52,121 [Test worker @kotlinx.coroutines.test runner#24] INFO  c.c.a.services.CallbackService - Callback sent successfully to http://localhost:8080/callback

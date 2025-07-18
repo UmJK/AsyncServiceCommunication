@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.chargepoint.asynccharging.services.CallbackServiceTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2025-07-18T09:54:52" hostname="Umakants-MacBook-Air.local" time="0.043">
+  <properties/>
+  <testcase name="sendCallback executes without exceptions()" classname="com.chargepoint.asynccharging.services.CallbackServiceTest" time="0.043"/>
+  <system-out><![CDATA[2025-07-18 15:24:52,121 [Test worker @kotlinx.coroutines.test runner#24] INFO  c.c.a.services.CallbackService - Callback sent successfully to http://localhost:8080/callback
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
