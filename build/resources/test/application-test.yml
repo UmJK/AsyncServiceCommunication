@@ -3,6 +3,6 @@ ktor:
     port: 8081
   application:
     modules:
-      - com.chargepoint.async-charging.ApplicationKt.module
+      - com.chargepoint.asynccharging.ApplicationKt.module
 logback:
   rootLevel: INFO

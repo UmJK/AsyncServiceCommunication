@@ -1,1 +1,1 @@
-rootProject.name = "ev-charging-ktor"
+rootProject.name = "async-charging-ktor"
