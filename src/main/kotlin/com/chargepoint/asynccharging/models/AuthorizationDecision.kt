@@ -1,14 +1,22 @@
 package com.chargepoint.asynccharging.models
+package com.chargepoint.asynccharging.models
 
 import kotlinx.serialization.Serializable
 
 /**
- * Authorization decision model that will be returned as callback.
+ * Authorization decision model
  */
 @Serializable
 data class AuthorizationDecision(
-    val stationId: String,
-    val driverToken: String,
-    val status: String,
-    val callbackUrl: String
+    val status: String, // "allowed", "not_allowed", "unknown"
+    val reason: String? = null,
+    val metadata: Map<String, String> = emptyMap()
 )
+import kotlinx.serialization.Serializable
+
+@Serializable
+enum class AuthorizationDecision {
+    PENDING,
+    APPROVED,
+    REJECTED
+}

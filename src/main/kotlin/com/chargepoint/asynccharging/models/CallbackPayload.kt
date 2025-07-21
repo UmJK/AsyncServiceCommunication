@@ -4,8 +4,12 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class CallbackPayload(
-    val callbackUrl: String,
+    val authorizationId: String,
+    val userId: String,
     val stationId: String,
-    val driverToken: String,
-    val decision: String
+    val connectorId: Int,
+    val decision: String,
+    val reason: String?,
+    val approvedEnergy: String?,
+    val timestamp: String
 )

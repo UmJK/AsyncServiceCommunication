@@ -14,8 +14,12 @@ class ChargingControllerTest {
     @Test
     fun `should accept valid charging request`() = testApplication {
         val request = ChargingRequest(
+            userId = "user-123",
             stationId = "123e4567-e89b-12d3-a456-426614174000",
-            driverToken = "validDriverToken123456789",
+            chargerId = "charger-123",
+            connectorId = 1,
+            requestedEnergy = "50.0",
+            maxDurationMinutes = 60,
             callbackUrl = "http://localhost/callback"
         )
 
@@ -30,8 +34,12 @@ class ChargingControllerTest {
     @Test
     fun `should reject invalid UUID`() = testApplication {
         val request = ChargingRequest(
+            userId = "user-123",
             stationId = "invalid-uuid",
-            driverToken = "validDriverToken123456789",
+            chargerId = "charger-123",
+            connectorId = 1,
+            requestedEnergy = "50.0",
+            maxDurationMinutes = 60,
             callbackUrl = "http://localhost/callback"
         )
 
