@@ -65,7 +65,7 @@ curl -X POST http://localhost:8080/api/v1/charging-session \
 # Response (immediate)
 {
   "status": "accepted",
-  "message": "Request queued for async processing.",
+  "message": "Request is being processed asynchronously. The result will be sent to the provided callback URL.",
   "requestId": "req-abc123...",
   "timestamp": 1640995200000
 }

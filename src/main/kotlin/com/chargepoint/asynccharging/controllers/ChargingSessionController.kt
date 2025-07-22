@@ -33,7 +33,7 @@ fun Route.chargingSessionRoutes(
                 call.respond(
                     ApiResponse(
                         status = "accepted",
-                        message = "Request queued for async processing.",
+                        message = "Request is being processed asynchronously. The result will be sent to the provided callback URL.",
                         requestId = request.requestId
                     )
                 )
