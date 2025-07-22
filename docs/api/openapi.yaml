@@ -1,0 +1,177 @@
+openapi: 3.0.3
+info:
+  title: Async Charging Service API
+  description: |
+    Asynchronous EV charging session management service that provides
+    non-blocking API endpoints for starting charging sessions.
+  version: 1.0.0
+  contact:
+    name: Development Team
+    email: dev@chargepoint.com
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+paths:
+  /api/v1/charging-session:
+    post:
+      summary: Start charging session
+      description: |
+        Initiates an asynchronous charging session authorization.
+        The API responds immediately while processing continues in the background.
+        The final decision is sent to the provided callback URL.
+      operationId: startChargingSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChargingRequest'
+            examples:
+              valid_request:
+                summary: Valid charging request
+                value:
+                  station_id: "123e4567-e89b-12d3-a456-426614174000"
+                  driver_token: "validDriverToken123"
+                  callback_url: "https://client.app/api/callbacks/charge-result"
+      responses:
+        '200':
+          description: Request accepted for processing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Service unavailable (queue full)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /health:
+    get:
+      summary: Health check
+      description: Returns the current health status of the service
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /metrics:
+    get:
+      summary: Service metrics
+      description: Returns current service metrics and statistics
+      responses:
+        '200':
+          description: Current metrics
+          content:
+            application/json:
+              schema:
+                type: object
+
+components:
+  schemas:
+    ChargingRequest:
+      type: object
+      required:
+        - station_id
+        - driver_token
+        - callback_url
+      properties:
+        station_id:
+          type: string
+          format: uuid
+          description: Station UUID identifier
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        driver_token:
+          type: string
+          minLength: 20
+          maxLength: 80
+          pattern: '^[A-Za-z0-9._~-]+$'
+          description: Driver token (20-80 chars, alphanumeric + special chars)
+          example: "validDriverToken123"
+        callback_url:
+          type: string
+          format: uri
+          description: HTTP/HTTPS callback URL where the result will be sent
+          example: "https://client.app/api/callbacks/charge-result"
+    
+    ApiResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [accepted]
+          description: Request status
+        message:
+          type: string
+          description: Human-readable message
+        requestId:
+          type: string
+          description: Unique request identifier
+        timestamp:
+          type: integer
+          format: int64
+          description: Response timestamp
+      example:
+        status: "accepted"
+        message: "Request queued for async processing."
+        requestId: "req-123e4567-e89b-12d3-a456-426614174000"
+        timestamp: 1640995200000
+
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          description: Error status
+        message:
+          type: string
+          description: Error message
+        timestamp:
+          type: integer
+          format: int64
+          description: Error timestamp
+        details:
+          type: object
+          additionalProperties:
+            type: string
+          description: Additional error details
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [UP, DEGRADED, DOWN]
+          description: Overall health status
+        timestamp:
+          type: integer
+          format: int64
+          description: Health check timestamp
+        components:
+          type: object
+          description: Individual component health status
+          additionalProperties:
+            $ref: '#/components/schemas/ComponentHealth'
+
+    ComponentHealth:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [UP, DEGRADED, DOWN]
+          description: Component health status
+        details:
+          type: object
+          description: Component-specific health details

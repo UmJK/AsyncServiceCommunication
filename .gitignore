@@ -1,0 +1,14 @@
+
+# Gradle
+.gradle/
+build/
+**/build/
+gradle-app.setting
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+

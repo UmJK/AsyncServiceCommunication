@@ -2,14 +2,13 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "1.9.20"
-    id("io.ktor.plugin") version "2.3.10"
     kotlin("plugin.serialization") version "1.9.20"
-    application
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("io.ktor.plugin") version "2.3.6"
 }
 
 group = "com.chargepoint"
-version = "0.0.1"
+version = "1.0.0"
+
 application {
     mainClass.set("com.chargepoint.asynccharging.ApplicationKt")
 }
@@ -19,57 +18,42 @@ repositories {
 }
 
 dependencies {
-
-    implementation("io.lettuce:lettuce-core:6.3.0.RELEASE")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.17.0")
-
-    // Ktor server
-    implementation("io.ktor:ktor-server-core:2.3.10")
-    implementation("io.ktor:ktor-server-netty:2.3.10")
-
-    // Content negotiation & JSON
-    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.10")
-    implementation("io.ktor:ktor-server-content-negotiation:2.3.10")
-
-    // Ktor server plugins
-    implementation("io.ktor:ktor-server-call-logging:2.3.10")
-    implementation("io.ktor:ktor-server-cors:2.3.10")
-    implementation("io.ktor:ktor-server-default-headers:2.3.10")
-    implementation("io.ktor:ktor-server-status-pages:2.3.10")
-
-    // HTTP client
-    implementation("io.ktor:ktor-client-core:2.3.10")
-    implementation("io.ktor:ktor-client-cio:2.3.10")
-    implementation("io.ktor:ktor-client-content-negotiation:2.3.10")
-    implementation("io.ktor:ktor-client-serialization:2.3.10")
-
-    // Database
-    implementation("com.zaxxer:HikariCP:5.0.1")
-    implementation("org.postgresql:postgresql:42.7.7")
-
-    // Kotlinx
+    implementation("io.ktor:ktor-server-core-jvm")
+    implementation("io.ktor:ktor-server-netty-jvm")
+    implementation("io.ktor:ktor-server-content-negotiation-jvm")
+    implementation("io.ktor:ktor-serialization-kotlinx-json-jvm")
+    implementation("io.ktor:ktor-server-call-logging-jvm")
+    implementation("io.ktor:ktor-server-cors-jvm")
+    implementation("io.ktor:ktor-server-status-pages-jvm")
+    implementation("io.ktor:ktor-client-core-jvm")
+    implementation("io.ktor:ktor-client-cio-jvm")
+    implementation("io.ktor:ktor-client-content-negotiation-jvm")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
-
-    // Logging
-    implementation("ch.qos.logback:logback-classic:1.5.13")
-
-    // Jedis for Redis Queue integration
-    implementation("redis.clients:jedis:5.1.0")
-
-    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
-
-    // Tests
-    testImplementation(kotlin("test"))
-    testImplementation("io.ktor:ktor-server-tests:2.3.10")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
-    testImplementation("io.ktor:ktor-client-mock:2.3.10")
+    implementation("ch.qos.logback:logback-classic:1.4.14")
+    implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
+    
+    testImplementation("io.ktor:ktor-server-tests-jvm")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 }
 
 tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "17"
 }
 
-tasks.test {
+tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+kotlin {
+    jvmToolchain(17)
+}
+
+dependencies {
+    // Test dependencies
+    testImplementation("io.ktor:ktor-server-test-host-jvm")
+    testImplementation("io.ktor:ktor-client-content-negotiation-jvm")
+    testImplementation("org.jetbrains.kotlin:kotlin-test")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    testImplementation("io.mockk:mockk:1.13.8")
 }

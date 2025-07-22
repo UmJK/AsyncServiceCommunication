@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  app-test:
+    build:
+      context: .
+      target: build
+    command: ["./gradlew", "test", "jacocoTestReport"]
+    environment:
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - test_reports:/app/build/reports
+
+  callback-mock-test:
+    image: kennethreitz/httpbin:latest
+    ports:
+      - "3000:80"
+
+volumes:
+  test_reports:

@@ -1,52 +1,71 @@
 package com.chargepoint.asynccharging.queue
 
-import com.chargepoint.asynccharging.models.ChargingRequest
-import kotlinx.serialization.Contextual
-import kotlinx.serialization.Serializable
+import com.chargepoint.asynccharging.config.QueueConfig
+import com.chargepoint.asynccharging.models.requests.ChargingRequest
+import com.chargepoint.asynccharging.services.MetricsService
+import com.chargepoint.asynccharging.exceptions.QueueException
+import mu.KotlinLogging
+import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.BlockingQueue
+import java.util.concurrent.TimeUnit
 
-/**
- * Interface for authorization queue operations
- */
-interface AuthorizationQueue {
-    suspend fun initialize()
-    suspend fun enqueue(authorizationId: String, request: ChargingRequest): Boolean
-    suspend fun dequeue(): QueueMessage?
-    suspend fun acknowledgeProcessing(authorizationId: String): Boolean
-    suspend fun requeueForRetry(authorizationId: String, retryCount: Int): Boolean
-    suspend fun markAsFailed(authorizationId: String, error: String): Boolean
-    suspend fun getQueueSize(): Long
-    suspend fun getProcessingQueueSize(): Long
-    suspend fun getFailedQueueSize(): Long
-    suspend fun getRetryQueueSize(): Long
-    suspend fun getStatistics(): Map<String, @Contextual Any>
-    suspend fun healthCheck(): Map<String, @Contextual Any>
-    suspend fun clearAllQueues(): Boolean
-    suspend fun getFailedMessages(limit: Int): List<QueueMessage>
-    suspend fun requeueFailedMessages(authorizationIds: List<String>): Int
-    suspend fun getStuckMessages(olderThanMinutes: Int): List<QueueMessage>
-    suspend fun shutdown()
+private val logger = KotlinLogging.logger {}
+
+interface MessageQueue<T> {
+    fun enqueue(item: T): Boolean
+    fun dequeue(timeoutMs: Long = 5000): T?
+    fun size(): Int
+    fun isEmpty(): Boolean
+    fun clear()
 }
 
-/**
- * Health status of the queue system
- */
-@Serializable
-data class QueueHealth(
-    val status: String, // "healthy", "warning", "unhealthy"
-    val isOperational: Boolean,
-    val lastHealthCheck: Long,
-    val issues: List<String> = emptyList(),
-    val recommendations: List<String> = emptyList(),
-    val metrics: Map<String, String> = emptyMap() // Using String instead of Any for serialization
-)
-
-@Serializable
-data class QueueMessage(
-    val authorizationId: String,
-    val request: ChargingRequest,
-    val enqueuedAt: Long,
-    val retryCount: Int = 0,
-    val lastRetryAt: Long? = null,
-    val failureReason: String? = null,
-    val failedAt: Long? = null
-)
+class AuthorizationQueue(
+    private val config: QueueConfig,
+    private val metricsService: MetricsService
+) : MessageQueue<ChargingRequest> {
+    
+    private val queue: BlockingQueue<ChargingRequest> = ArrayBlockingQueue(config.maxSize)
+    
+    override fun enqueue(item: ChargingRequest): Boolean {
+        return try {
+            val result = queue.offer(item, 1, TimeUnit.SECONDS)
+            if (result) {
+                metricsService.recordQueueSize(queue.size)
+                logger.debug { "Enqueued request ${item.toLogString()}, queue size: ${queue.size}" }
+            } else {
+                logger.warn { "Queue is full, rejected request ${item.toLogString()}" }
+                throw QueueException("Queue is full (size: ${queue.size}, max: ${config.maxSize})")
+            }
+            result
+        } catch (e: InterruptedException) {
+            Thread.currentThread().interrupt()
+            logger.error(e) { "Interrupted while enqueuing request ${item.toLogString()}" }
+            false
+        }
+    }
+    
+    override fun dequeue(timeoutMs: Long): ChargingRequest? {
+        return try {
+            val item = queue.poll(timeoutMs, TimeUnit.MILLISECONDS)
+            if (item != null) {
+                metricsService.recordQueueSize(queue.size)
+                logger.debug { "Dequeued request ${item.toLogString()}, queue size: ${queue.size}" }
+            }
+            item
+        } catch (e: InterruptedException) {
+            Thread.currentThread().interrupt()
+            logger.debug { "Interrupted while waiting for queue item" }
+            null
+        }
+    }
+    
+    override fun size(): Int = queue.size
+    
+    override fun isEmpty(): Boolean = queue.isEmpty()
+    
+    override fun clear() {
+        queue.clear()
+        metricsService.recordQueueSize(0)
+        logger.info { "Queue cleared" }
+    }
+}

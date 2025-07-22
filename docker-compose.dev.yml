@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - .:/app
+      - gradle_cache:/root/.gradle
+    environment:
+      - LOG_LEVEL=DEBUG
+      - KTOR_DEVELOPMENT=true
+    command: ["./gradlew", "run", "--continuous"]
+
+volumes:
+  gradle_cache:
