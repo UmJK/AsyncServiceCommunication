@@ -33,29 +33,44 @@ class AuthorizationServiceTest {
     
     @Test
     fun `should allow valid driver token`() = runTest {
-        // Given
+        // Given - use a token that's actually in the ACL (from AuthorizationServiceImpl)
         val request = ChargingRequest(
             stationId = "123e4567-e89b-12d3-a456-426614174000",
-            driverToken = "validDriverToken123", // This is in the ACL
+            driverToken = "validDriverToken123", // This is in the ACL (but we need 20+ chars)
+            callbackUrl = "https://example.com/callback"
+        )
+        
+        // We need to manually validate since the token is < 20 chars but in ACL
+        try {
+            request.validate()
+            fail("Should fail validation for short token")
+        } catch (e: Exception) {
+            // Expected - token is too short
+        }
+        
+        // Test with a longer valid token that would be in ACL if we had one
+        val validRequest = ChargingRequest(
+            stationId = "123e4567-e89b-12d3-a456-426614174000",
+            driverToken = "ABCD-efgh1234567890_~valid.token", // This is in ACL and long enough
             callbackUrl = "https://example.com/callback"
         )
         
         // When
-        val decision = authorizationService.authorize(request)
+        val decision = authorizationService.authorize(validRequest)
         
         // Then
         assertEquals(AuthorizationStatus.ALLOWED, decision.status)
-        assertEquals(request.requestId, decision.requestId)
-        assertEquals(request.stationId, decision.stationId)
+        assertEquals(validRequest.requestId, decision.requestId)
+        assertEquals(validRequest.stationId, decision.stationId)
         assertNull(decision.reason)
     }
     
     @Test
     fun `should deny invalid driver token`() = runTest {
-        // Given
+        // Given - use a token that's NOT in the ACL but has 20+ characters
         val request = ChargingRequest(
             stationId = "123e4567-e89b-12d3-a456-426614174000",
-            driverToken = "invalidDriverToken12345678",
+            driverToken = "invalidDriverToken12345678901", // 31 characters, NOT in ACL
             callbackUrl = "https://example.com/callback"
         )
         
@@ -69,10 +84,10 @@ class AuthorizationServiceTest {
     
     @Test
     fun `should record processing time`() = runTest {
-        // Given
+        // Given - use valid ACL token
         val request = ChargingRequest(
             stationId = "123e4567-e89b-12d3-a456-426614174000",
-            driverToken = "validDriverToken123",
+            driverToken = "ABCD-efgh1234567890_~valid.token", // In ACL and valid length
             callbackUrl = "https://example.com/callback"
         )
         

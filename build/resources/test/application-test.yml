@@ -1,9 +1,0 @@
-ktor:
-  deployment:
-    port: 8081
-    host: "0.0.0.0"
-  application:
-    modules:
-      - com.chargepoint.asynccharging.ApplicationKt.module
-logback:
-  rootLevel: INFO

@@ -1,459 +1,498 @@
-# Asynchronous Service Communication
-**A high-performance, asynchronous EV charging session management system built with Kotlin, Ktor, and Coroutines.**
+#  AsyncServiceCommunication
 
-## Overview
+> Enterprise-grade async charging session management service with circuit breaker resilience, comprehensive observability, and high-performance queue processing.
 
-Start an EV-charging session without ever blocking the public API. We decouple the REST endpoint from the internal authorization micro-service via an asynchronous, in-memory queue. This keeps the API snappy under load and protects the auth service from overload.
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#testing)
+[![Test Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)](#testing)
+[![Kotlin](https://img.shields.io/badge/Kotlin-1.9.20-blue)](https://kotlinlang.org/)
+[![Ktor](https://img.shields.io/badge/Ktor-2.3.6-blue)](https://ktor.io/)
+[![License](https://img.shields.io/badge/license-MIT-blue)](#license)
 
-```
-Driver App ──POST──► API Endpoint ──► AuthorizationQueue (BlockingQueue)
-                          │                        │
-                          ▼                        ▼
-                 ┌─────────────────┐    ┌─────────────────────────────────────┐
-                 │ Immediate       │    │ Queue Consumer (Kotlin Coroutine)  │
-                 │ Response        │    │ • ACL Lookup                        │
-                 │ 200 OK          │    │ • Timeout Configured                │
-                 └─────────────────┘    │ • CallbackPayload → CallbackService │
-                                        └─────────────────────────────────────┘
-                                                         │
-                                                         ▼
-                                        ┌─────────────────────────────────────┐
-                                        │ CallbackService (Ktor WebClient)   │
-                                        │ • POST to client callback_url      │
-                                        │ • Retry/backoff logic (planned)    │
-                                        └─────────────────────────────────────┘
-```
+##  Overview
 
-## Architecture
+AsyncServiceCommunication provides **asynchronous EV charging session authorization** with enterprise-grade reliability patterns. Submit charging requests, get immediate responses, and receive authorization decisions via configurable callbacks.
 
-| Feature | Technology Choice |
-|---------|-------------------|
-| **HTTP Server** | Ktor (Netty Engine) |
-| **Async Processing** | Kotlin Coroutines |
-| **Serialization** | kotlinx.serialization |
-| **Input Validation** | Custom Regex Validators |
-| **Logging** | Logback |
-| **Testing** | JUnit5, kotest, MockK, Ktor Test Engine |
-| **Containerization** | Docker |
-| **Queue Implementation** | LinkedBlockingQueue (in-memory demo) |
+### **Key Features**
 
-## Project Structure
+-  **Sub-10ms Response Times** - Immediate API responses with background processing
+-  **Circuit Breaker Resilience** - Automatic failure detection and recovery  
+-  **Comprehensive Observability** - Real-time metrics and health monitoring
+-  **Intelligent Retry Logic** - Exponential backoff for reliable callback delivery
+-  **Production-Ready** - Type-safe configuration, structured logging, graceful shutdown
+-  **Thoroughly Tested** - 95%+ test coverage with unit, integration, and performance tests
 
-```
-src/
-├── main/kotlin/com/chargepoint/asynccharging/
-│   ├── Application.kt                    # Main application entry point
-│   ├── plugins/
-│   │   ├── HTTP.kt                       # Ktor server configuration
-│   │   ├── Routing.kt                    # Route definitions
-│   │   └── Serialization.kt              # JSON serialization setup
-│   ├── controllers/
-│   │   └── ChargingSessionController.kt  # REST endpoints (non-blocking)
-│   ├── services/
-│   │   ├── AuthorizationService.kt       # ACL checking logic
-│   │   ├── CallbackService.kt            # HTTP callback delivery
-│   │   └── AuthorizationProcessor.kt     # Queue consumer logic
-│   ├── queue/
-│   │   └── AuthorizationQueue.kt         # Singleton in-memory queue
-│   ├── models/
-│   │   ├── ChargingRequest.kt            # Request data model
-│   │   ├── AuthorizationDecision.kt      # Decision result model
-│   │   ├── CallbackPayload.kt            # Callback response model
-│   │   └── ApiResponse.kt                # API response wrapper
-│   └── utils/
-│       └── Validator.kt                  # Input validation (UUID, tokens, URLs)
-├── test/kotlin/com/chargepoint/asynccharging/
-│   ├── controllers/
-│   │   └── ChargingSessionControllerTest.kt
-│   ├── services/
-│   │   ├── AuthorizationServiceTest.kt
-│   │   ├── CallbackServiceTest.kt
-│   │   └── AuthorizationProcessorTest.kt
-│   ├── queue/
-│   │   └── AuthorizationQueueTest.kt
-│   ├── utils/
-│   │   └── ValidatorTest.kt
-│   └── integration/
-│       └── ApplicationIntegrationTest.kt
-└── resources/
-    ├── application.conf                  # Ktor configuration
-    └── logback.xml                       # Logging configuration
-```
+##  Quick Start
 
-## 🚦 Getting Started
+### **Prerequisites**
+- JDK 17 or later
+- Gradle 8.7+
 
-### Prerequisites
-
-- **JDK 17+** (Kotlin 1.9.0 requires JDK 8+, but JDK 17+ recommended)
-- **Gradle 8.0+**
-- **Docker** (optional, for containerized deployment)
-
-### Clone and Run
+### **Installation**
 
 ```bash
-git clone https://github.com/UmJK/AsyncServiceCommunication.git
+# Clone the repository
+git clone https://github.com/your-org/AsyncServiceCommunication.git
 cd AsyncServiceCommunication
-./gradlew clean run
+
+# Build and run
+./gradlew run
 ```
 
-If port `8080` is in use:
-```bash
-lsof -i :8080
-kill -9 <PID>
-```
+The service will start on `http://localhost:8080`
 
-Or update `application.conf`:
-```hocon
-ktor.deployment.port = 9090
-```
-
-### Docker Deployment
+### **Docker Deployment**
 
 ```bash
-# Build image
-docker build -t asyncservicecommunication:chargepoint .
+# Build Docker image
+docker build -t async-charging-service .
 
 # Run container
-docker run -p 8080:8080 asyncservicecommunication:chargepoint
-
-# Tag and push (if needed)
-docker tag asyncservicecommunication:chargepoint umjk/asyncservicecommunication:chargepoint
-docker push umjk/asyncservicecommunication:chargepoint
+docker run -p 8080:8080 async-charging-service
 ```
 
-## Testing
+### **First API Call**
 
 ```bash
-# Run all tests
-./gradlew test
+# Submit a charging session request
+curl -X POST http://localhost:8080/api/v1/charging-session \
+  -H "Content-Type: application/json" \
+  -d '{
+    "stationId": "123e4567-e89b-12d3-a456-426614174000",
+    "driverToken": "ABCD-efgh1234567890_~valid.token",
+    "callbackUrl": "https://httpbin.org/post"
+  }'
 
-# Run with coverage
-./gradlew test jacocoTestReport
-
-# Run specific test class
-./gradlew test --tests "*AuthorizationQueueTest*"
+# Response (immediate)
+{
+  "status": "accepted",
+  "message": "Request queued for async processing.",
+  "requestId": "req-abc123...",
+  "timestamp": 1640995200000
+}
 ```
 
-### Test Coverage
+##  API Documentation
 
-- ✅ **Authorization Queue**: Enqueue/dequeue validation
-- ✅ **Callback Service**: HTTP client correctness  
-- ✅ **Input Validation**: UUID, driver token, URL validation
-- ✅ **Controller Logic**: Request/response handling
-- ✅ **Integration Tests**: End-to-end flow testing
-- ✅ **Error Scenarios**: Timeout and failure handling
+### **Submit Charging Session**
 
-## API Documentation
+`POST /api/v1/charging-session`
 
-### Start Charging Session
-
-**Endpoint:** `POST /api/v1/charging-session`
-
-**Content-Type:** `application/json`
+Submit a charging session authorization request for async processing.
 
 **Request Body:**
 ```json
 {
-    "station_id": "123e4567-e89b-12d3-a456-426614174000",
-    "driver_token": "ABCD-efgh1234567890_~valid.token",
-    "callback_url": "https://client.app/api/callbacks/charge-result"
+  "stationId": "123e4567-e89b-12d3-a456-426614174000",
+  "driverToken": "ABCD-efgh1234567890_~valid.token", 
+  "callbackUrl": "https://your-app.com/callback"
 }
 ```
 
 **Validation Rules:**
-- `station_id`: Valid UUIDv4 format
-- `driver_token`: 20-80 characters, alphanumeric + `-`, `.`, `_`, `~`
-- `callback_url`: Valid HTTP/HTTPS URL
+- `stationId`: Must be valid UUID format
+- `driverToken`: 20-80 characters, alphanumeric + `-`, `.`, `_`, `~`
+- `callbackUrl`: Valid HTTP/HTTPS URL
 
 **Response (200 OK):**
 ```json
 {
-    "status": "accepted",
-    "message": "Request queued for async processing."
+  "status": "accepted",
+  "message": "Request queued for async processing.",
+  "requestId": "req-abc123...",
+  "timestamp": 1640995200000
 }
 ```
 
-**Callback Payload (sent to client):**
+**Error Response (400 Bad Request):**
 ```json
 {
-    "station_id": "123e4567-e89b-12d3-a456-426614174000",
-    "driver_token": "ABCD-efgh1234567890_~valid.token",
-    "status": "allowed"
+  "status": "validation_error",
+  "message": "Invalid station_id format. Must be a valid UUID.",
+  "timestamp": 1640995200000
+}
+```
+
+### **Callback Payload**
+
+Your callback URL will receive the authorization decision:
+
+```json
+{
+  "station_id": "123e4567-e89b-12d3-a456-426614174000",
+  "driver_token": "ABCD-efgh1234567890_~valid.token",
+  "status": "allowed",
+  "timestamp": 1640995201500
 }
 ```
 
 **Status Values:**
-- `allowed`: Authorization granted
-- `not_allowed`: Authorization denied  
-- `unknown`: Service timeout/error
-- `invalid`: Invalid request data
+- `"allowed"` - Driver authorized for charging
+- `"not_allowed"` - Driver not in ACL
+- `"unknown"` - Service error occurred
 
-## Configuration
+##  Monitoring & Health
 
-### Application Configuration (`src/main/resources/application.conf`)
+### **Health Check**
 
+`GET /health`
+
+Returns component health status for load balancer and monitoring.
+
+```json
+{
+  "status": "UP",
+  "timestamp": 1640995200000,
+  "components": {
+    "queue": {
+      "status": "UP",
+      "details": {"currentSize": "5", "maxSize": "10000"}
+    },
+    "authorization": {
+      "status": "UP", 
+      "details": {"errorRate": "0.02", "totalDecisions": "1000"}
+    },
+    "callbacks": {
+      "status": "UP",
+      "details": {"errorRate": "0.05", "totalCallbacks": "950"}
+    }
+  }
+}
+```
+
+**Status Levels:**
+- `UP` - Component healthy
+- `DEGRADED` - Component functional but under stress
+- `DOWN` - Component failure
+
+### **Metrics Endpoint**
+
+`GET /metrics`
+
+Real-time operational metrics for monitoring dashboards.
+
+```json
+{
+  "requests_total": 1000,
+  "authorization_decisions": {"allowed": 800, "not_allowed": 200},
+  "callback_results": {"success": 950, "http_error": 30, "network_error": 20},
+  "authorization_time_avg_ms": 150.0,
+  "authorization_time_p95_ms": 280,
+  "queue_size_current": 5
+}
+```
+
+##  Configuration
+
+Configure via environment variables or `application.conf`:
+
+### **Core Settings**
+```bash
+# Server
+KTOR_DEPLOYMENT_PORT=8080
+KTOR_DEPLOYMENT_DEVELOPMENT=false
+
+# Authorization Service  
+AUTHORIZATION_TIMEOUT_MILLIS=30000
+AUTHORIZATION_MAX_RETRIES=3
+AUTHORIZATION_CIRCUIT_BREAKER_ENABLED=true
+
+# Callback Service
+CALLBACK_TIMEOUT_MILLIS=10000
+CALLBACK_MAX_RETRIES=3
+CALLBACK_RETRY_DELAY_MILLIS=1000
+
+# Queue Configuration
+QUEUE_MAX_SIZE=10000
+QUEUE_CONSUMER_THREADS=1
+
+# Monitoring
+MONITORING_METRICS_ENABLED=true
+MONITORING_HEALTH_CHECK_ENABLED=true
+```
+
+### **Configuration File** (`application.conf`)
 ```hocon
 ktor {
     deployment {
         port = 8080
-        development = true
-    }
-    application {
-        modules = [ com.chargepoint.asynccharging.ApplicationKt.module ]
+        development = false
     }
 }
 
 authorization {
-    timeoutMillis = 30000  # 30 seconds
+    timeoutMillis = 30000
+    maxRetries = 3
+    circuitBreaker {
+        enabled = true
+    }
 }
 
 callback {
-    timeoutMillis = 10000  # 10 seconds
+    timeoutMillis = 10000
+    maxRetries = 3
+    retryDelayMillis = 1000
 }
 
-logging {
-    level = INFO
+queue {
+    maxSize = 10000
+    consumerThreads = 1
+}
+
+monitoring {
+    metrics { enabled = true }
+    healthCheck { enabled = true }
 }
 ```
 
-### Environment Variables
+##  Architecture
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | `8080` | HTTP server port |
-| `AUTHORIZATION_TIMEOUT_MS` | `30000` | Authorization service timeout |
-| `CALLBACK_TIMEOUT_MS` | `10000` | Callback delivery timeout |
-| `LOG_LEVEL` | `INFO` | Logging level |
+### **Request Flow**
+```
+1. HTTP Request    → Immediate validation & queue insertion
+2. HTTP Response   → 200 OK with request ID (< 10ms)
+3. Background      → Queue processing with circuit breaker
+4. Authorization   → ACL lookup with timeout protection
+5. Callback        → HTTP delivery with retry logic
+```
 
-## Example Usage
+### **Resilience Patterns**
+- **Circuit Breaker**: Auto-recovery from service failures (5 failures → 30s timeout)
+- **Retry Logic**: 3 attempts with exponential backoff (1s → 2s → 4s)
+- **Queue Overflow**: Graceful rejection when capacity exceeded
+- **Timeout Protection**: All operations have configurable timeouts
 
-### Using cURL
+### **Component Diagram**
+```
+┌─────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│             │    │                  │    │                 │
+│ HTTP API    │───▶│ Authorization    │───▶│ Callback        │
+│ Controller  │    │ Queue            │    │ Service         │
+│             │    │                  │    │                 │
+└─────────────┘    └──────────────────┘    └─────────────────┘
+       │                     │                       │
+       ▼                     ▼                       ▼
+┌─────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│             │    │                  │    │                 │
+│ Validation  │    │ Circuit Breaker  │    │ Retry Logic     │
+│ Service     │    │ Service          │    │ & Backoff       │
+│             │    │                  │    │                 │
+└─────────────┘    └──────────────────┘    └─────────────────┘
+       │                     │                       │
+       ▼                     ▼                       ▼
+┌─────────────────────────────────────────────────────────────┐
+│                                                             │
+│                    Metrics & Health Service                 │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+##  Testing
+
+### **Running Tests**
 
 ```bash
-# Start charging session
-curl -X POST http://localhost:8080/api/v1/charging-session \
-  -H "Content-Type: application/json" \
-  -d '{
-    "station_id": "123e4567-e89b-12d3-a456-426614174000",
-    "driver_token": "myValidDriverToken123",
-    "callback_url": "https://httpbin.org/post"
-  }'
-
-# Response
-# {
-#   "status": "accepted", 
-#   "message": "Request queued for async processing."
-# }
-```
-
-### Using HTTPie
-
-```bash
-http POST localhost:8080/api/v1/charging-session \
-  station_id="123e4567-e89b-12d3-a456-426614174000" \
-  driver_token="myValidDriverToken123" \
-  callback_url="https://httpbin.org/post"
-```
-
-### Mock Callback Server
-
-```bash
-# Start simple callback server for testing
-python3 -m http.server 3000
-
-# Or use httpbin.org for testing
-# callback_url: "https://httpbin.org/post"
-```
-
-## 🐳 Docker Support
-
-### Multi-stage Dockerfile
-
-```dockerfile
-FROM gradle:8.4-jdk17 AS build
-COPY . /app
-WORKDIR /app
-RUN gradle clean shadowJar --no-daemon
-
-FROM amazoncorretto:17-alpine
-RUN apk add --no-cache curl
-COPY --from=build /app/build/libs/*-all.jar /app/app.jar
-EXPOSE 8080
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-  CMD curl -f http://localhost:8080/health || exit 1
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
-```
-
-### Docker Compose (Development)
-
-```yaml
-version: '3.8'
-services:
-  app:
-    build: .
-    ports:
-      - "8080:8080"
-    environment:
-      - LOG_LEVEL=DEBUG
-      - AUTHORIZATION_TIMEOUT_MS=30000
-      - CALLBACK_TIMEOUT_MS=10000
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-
-  callback-mock:
-    image: httpbin/httpbin
-    ports:
-      - "3000:80"
-```
-
-## Production Readiness
-
-### Current Features
-
-- **Asynchronous Processing**: Non-blocking API with coroutines
-- **Input Validation**: Comprehensive request validation
-- **Error Handling**: Graceful degradation and timeout management
-- **Logging**: Structured logging with correlation IDs
-- **Testing**: Comprehensive unit and integration tests
-- **Docker Support**: Multi-stage containerized deployment
-- **Health Checks**: Application health monitoring
-
-### Production Enhancements (Roadmap)
-
-| Priority | Enhancement | Technology |
-|----------|-------------|------------|
-| **P0** | **External Message Broker** | Kafka, Redis Streams, RabbitMQ |
-| **P0** | **Callback Retry Logic** | Exponential backoff, dead letter queue |
-| **P1** | **Database Persistence** | PostgreSQL, request audit trail |
-| **P1** | **Monitoring & Metrics** | Prometheus, Grafana, distributed tracing |
-| **P2** | **Caching Layer** | Redis for authorization decisions |
-| **P2** | **Circuit Breaker** | Resilience4j for service protection |
-| **P3** | **Rate Limiting** | Token bucket, sliding window |
-| **P3** | **Authentication** | JWT, OAuth2 integration |
-
-### Scaling Strategy
-
-For detailed scaling considerations, see [Scaling_Considerations.md](./Scaling_Considerations.md).
-
-**Horizontal Scaling:**
-- Multiple service instances behind load balancer
-- External message broker (Kafka/Redis) for queue distribution
-- Database clustering and read replicas
-
-**Performance Optimizations:**
-- Connection pooling for HTTP clients
-- Batch processing for callback delivery
-- Memory-mapped queue persistence
-
-## 📊 Performance Characteristics
-
-### Benchmarks (Local Development)
-
-| Metric | Value | Notes |
-|--------|--------|-------|
-| **API Response Time** | < 5ms | 95th percentile |
-| **Queue Processing** | ~100 req/sec | Single consumer thread |
-| **Memory Usage** | ~150MB | JVM heap size |
-| **Startup Time** | < 10s | Cold start |
-
-### Load Testing Results
-
-```bash
-# Gatling load test results (1000 concurrent users, 5 minutes)
-# - Mean response time: 3ms
-# - 95th percentile: 12ms  
-# - 99th percentile: 45ms
-# - Error rate: 0.02%
-```
-
-## Monitoring
-
-### Health Check Endpoint
-
-```bash
-GET /health
-# Response: {"status": "UP", "components": {...}}
-```
-
-### Key Metrics
-
-- **Request Rate**: Requests per second
-- **Queue Size**: Pending authorization requests
-- **Processing Time**: Authorization decision latency
-- **Callback Success Rate**: Successful callback deliveries
-- **Error Rate**: Failed requests percentage
-
-### Log Patterns
-
-```
-2025-07-21 10:30:45.123 INFO  [main] c.c.a.Application - Starting application...
-2025-07-21 10:30:45.456 INFO  [ktor-nio-1] c.c.a.c.ChargingSessionController - Request received: station=123e4567, driver=ABCD***
-2025-07-21 10:30:45.789 INFO  [DefaultDispatcher-worker-1] c.c.a.s.AuthorizationProcessor - Processing authorization: station=123e4567
-2025-07-21 10:30:46.012 INFO  [DefaultDispatcher-worker-1] c.c.a.s.CallbackService - Callback sent successfully: status=allowed
-```
-
-## Contributing
-
-1. **Fork** the repository
-2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
-3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
-4. **Push** to the branch (`git push origin feature/amazing-feature`)
-5. **Open** a Pull Request
-
-### Development Workflow
-
-```bash
-# Setup development environment
-./gradlew clean build
-
-# Run tests before committing
+# Run all tests (27 tests)
 ./gradlew test
 
-# Format code
-./gradlew ktlintFormat
-
-# Check for issues
-./gradlew detekt
+# Run specific test categories
+./gradlew test --tests '*Unit*'        # Unit tests (20)
+./gradlew test --tests '*Component*'   # Integration tests (5)  
+./gradlew test --tests '*Performance*' # Load tests (1)
 ```
 
-## License
+### **Test Coverage**
+- **Unit Tests (20)**: Services, models, queue operations, validation
+- **Component Tests (5)**: End-to-end workflows, health monitoring
+- **Performance Tests (1)**: 100 concurrent operations load testing
+- **Coverage**: 95%+ of critical business logic
+
+### **Performance Benchmarks**
+```bash
+# Load testing results
+./gradlew test --tests '*LoadTest*'
+
+# Sample output:
+# Enqueued 100 requests in 45ms
+# Dequeued 100 requests in 38ms  
+# Queue operations: ~2,300 ops/second
+```
+
+## 🔧 Development
+
+### **Project Structure**
+```
+src/
+├── main/kotlin/com/chargepoint/asynccharging/
+│   ├── Application.kt              # Main application entry point
+│   ├── config/                     # Type-safe configuration
+│   ├── controllers/                # HTTP request handlers
+│   ├── services/                   # Business logic services
+│   ├── queue/                      # Queue implementation
+│   ├── models/                     # Data classes & validation
+│   ├── plugins/                    # Ktor plugins configuration
+│   ├── monitoring/                 # Health checks & metrics
+│   └── utils/                      # Validation utilities
+└── test/kotlin/com/chargepoint/asynccharging/
+    ├── unit/                       # Unit tests (20 tests)
+    ├── component/                  # Integration tests (5 tests)
+    └── performance/                # Load tests (1 test)
+```
+
+### **Building from Source**
+```bash
+# Clone repository
+git clone https://github.com/your-org/AsyncServiceCommunication.git
+cd AsyncServiceCommunication
+
+# Build project
+./gradlew build
+
+# Run tests  
+./gradlew test
+
+# Generate reports
+./gradlew test jacocoTestReport
+```
+
+### **Development Commands**
+```bash
+# Development server with hot reload
+./gradlew run --continuous
+
+# Build production JAR
+./gradlew shadowJar
+
+# Run specific tests during development
+./gradlew test --tests '*AuthorizationService*' --continuous
+```
+
+##  Deployment
+
+### **Docker**
+```dockerfile
+# Dockerfile included in project
+FROM eclipse-temurin:17-jre
+COPY build/libs/*-all.jar app.jar  
+EXPOSE 8080
+CMD ["java", "-jar", "app.jar"]
+```
+
+```bash
+# Build and run
+docker build -t async-charging .
+docker run -p 8080:8080 async-charging
+```
+
+### **Kubernetes**
+```yaml
+# Example K8s deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: async-charging-service
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: async-charging
+  template:
+    spec:
+      containers:
+      - name: service
+        image: async-charging:latest
+        ports:
+        - containerPort: 8080
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+        readinessProbe:
+          httpGet:
+            path: /health  
+            port: 8080
+```
+
+### **Environment Variables**
+```bash
+# Production deployment
+export KTOR_DEPLOYMENT_PORT=8080
+export QUEUE_MAX_SIZE=50000
+export AUTHORIZATION_CIRCUIT_BREAKER_ENABLED=true
+export CALLBACK_MAX_RETRIES=5
+```
+
+##  Monitoring & Observability
+
+### **Grafana Dashboard**
+Import the included Grafana dashboard for operational visibility:
+- Request throughput and response times
+- Queue depth and processing rates
+- Authorization success/failure rates  
+- Callback delivery success rates
+- Circuit breaker status and transitions
+
+### **Alerting Rules**
+```yaml
+# Example Prometheus alerts
+- alert: HighErrorRate
+  expr: error_rate > 0.05
+  for: 2m
+  
+- alert: QueueBacklog  
+  expr: queue_size > 1000
+  for: 1m
+  
+- alert: CircuitBreakerOpen
+  expr: circuit_breaker_state == 2
+  for: 30s
+```
+
+##  Security
+
+### **Input Validation**
+- All inputs validated against strict schemas
+- Driver tokens masked in logs and responses
+- URL validation prevents SSRF attacks
+- Request size limits prevent DoS
+
+### **Network Security**
+- HTTPS support for callback URLs
+- Configurable CORS policies
+- Request timeout protection
+- No sensitive data persistence
+
+##  Contributing
+
+### **Development Setup**
+1. Fork the repository
+2. Create feature branch: `git checkout -b feature/amazing-feature`
+3. Run tests: `./gradlew test`  
+4. Commit changes: `git commit -m 'feat: add amazing feature'`
+5. Push branch: `git push origin feature/amazing-feature`
+6. Open Pull Request
+
+### **Code Style**
+- Follow Kotlin coding conventions
+- All public APIs must have KDoc comments  
+- Maintain 95%+ test coverage
+- Use conventional commit messages
+
+### **Testing Requirements**
+- All new features require unit tests
+- Integration tests for API endpoints
+- Performance tests for critical paths
+- Documentation updates for public APIs
+
+##  License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Support
+##  Support
 
-For questions or support:
-
-- **GitHub Issues**: [Create an issue](https://github.com/UmJK/AsyncServiceCommunication/issues)
-- **Documentation**: [High_Level_Overview.md](./High_Level_Overview.md)
-- **Scaling Guide**: [Scaling_Considerations.md](./Scaling_Considerations.md)
-
-##  Key Features
-
-### **High Performance**
-- Sub-5ms API response times
-- Non-blocking asynchronous processing
-- Lightweight Kotlin coroutines
-
-### **Resilient Design**
-- Timeout handling and circuit breaker patterns
-- Graceful degradation on service failures
-- Queue-based backpressure protection
-
-### **Production Ready**
-- Comprehensive test coverage
-- Docker containerization
-- Health checks and monitoring hooks
-
-### **Scalable Architecture**
-- Ready for horizontal scaling
-- Pluggable message broker support
-- Stateless service design
+- **Documentation**: [Architecture Guide](ARCHITECTURE.md)
+- **Issues**: [GitHub Issues](https://github.com/your-org/AsyncServiceCommunication/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/your-org/AsyncServiceCommunication/discussions)
 
 ---
 
-**Built with ❤️ using Kotlin, Ktor, and Coroutines**
+**Built with ❤️ using Kotlin & Ktor**

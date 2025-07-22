@@ -16,8 +16,15 @@ class ChargingRequestTest {
         // When
         val request = ChargingRequest(stationId, driverToken, callbackUrl)
         
-        // Then
-        assertDoesNotThrow { request.validate() }
+        // Then - validation should not throw
+        try {
+            request.validate()
+            // If we reach here, validation passed
+            assertTrue(true, "Validation should pass")
+        } catch (e: Exception) {
+            fail("Validation should not throw for valid request: ${e.message}")
+        }
+        
         assertEquals(stationId, request.stationId)
         assertEquals(driverToken, request.driverToken)
         assertEquals(callbackUrl, request.callbackUrl)

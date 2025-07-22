@@ -57,3 +57,14 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
     testImplementation("io.mockk:mockk:1.13.8")
 }
+
+// Test configuration
+tasks.withType<Test> {
+    useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+    }
+}
