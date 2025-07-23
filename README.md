@@ -2,8 +2,6 @@
 
 A **production-ready asynchronous EV charging session authorization service** built with **Kotlin**, **Ktor**, and **enterprise-grade patterns**.
 
-[![CI](https://github.com/UmJK/AsyncServiceCommunication/actions/workflows/ci.yml/badge.svg)](https://github.com/UmJK/AsyncServiceCommunication/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/UmJK/AsyncServiceCommunication/branch/main/graph/badge.svg)](https://codecov.io/gh/UmJK/AsyncServiceCommunication)
 
 ## **100% ChargePoint Specification Compliant**
 
@@ -461,7 +459,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-Built with ❤️ for reliable EV charging infrastructure and **100% ChargePoint specification compliance** 🚗⚡
+Built with ❤️ for reliable EV charging infrastructure and **100% ChargePoint specification compliance** 
 
 ---
 
