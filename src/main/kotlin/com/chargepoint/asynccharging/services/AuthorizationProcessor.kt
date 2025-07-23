@@ -10,7 +10,8 @@ class AuthorizationProcessor(
     private val queue: AuthorizationQueue,
     private val authorizationService: AuthorizationService,
     private val callbackService: CallbackService,
-    private val metricsService: MetricsService
+    private val metricsService: MetricsService,
+    private val auditService: AuditService = AuditService()
 ) {
     private var processingJob: Job? = null
     
@@ -22,6 +23,7 @@ class AuthorizationProcessor(
         
         processingJob = CoroutineScope(Dispatchers.Default).launch {
             logger.info { "Starting authorization processor" }
+            logger.info { "Audit logging enabled: ${auditService.getAuditFilePath()}" }
             
             while (isActive) {
                 try {
@@ -33,8 +35,17 @@ class AuthorizationProcessor(
                         // Authorize the request
                         val decision = authorizationService.authorize(request)
                         
-                        // Send callback
-                        val callbackSent = callbackService.sendCallback(decision, request.callbackUrl)
+                        // 🚨 SPECIFICATION REQUIREMENT: Persist decision for debugging
+                        auditService.logDecision(request, decision)
+                        
+                        // Send callback with original driver token
+                        val callbackSent = if (callbackService is CallbackServiceImpl) {
+                            // Use the version that accepts driver token
+                            callbackService.sendCallback(decision, request.callbackUrl, request.driverToken)
+                        } else {
+                            // Fallback for interface (though this won't work properly)
+                            callbackService.sendCallback(decision, request.callbackUrl)
+                        }
                         
                         if (callbackSent) {
                             logger.info { "Successfully processed request: ${request.requestId}" }

@@ -21,8 +21,12 @@ fun Route.chargingSessionRoutes(
             // Record incoming request
             metricsService.incrementRequestCounter()
             
-            // Parse and validate request
+            // Parse request
             val request = call.receive<ChargingRequest>()
+            
+            // Validate request
+            request.validate()
+            
             logger.info { "Received charging session request: ${request.toLogString()}" }
             
             // Enqueue for async processing
@@ -30,6 +34,8 @@ fun Route.chargingSessionRoutes(
             
             if (enqueued) {
                 logger.info { "Request queued successfully: ${request.requestId}" }
+                
+                // SPECIFICATION REQUIREMENT: Exact response message format
                 call.respond(
                     ApiResponse(
                         status = "accepted",
@@ -45,7 +51,7 @@ fun Route.chargingSessionRoutes(
             }
             
         } catch (e: Exception) {
-            logger.error(e) { "Error processing charging session request" }
+            logger.error(e) { "Error processing charging session request: ${e.message}" }
             throw e // Let StatusPages plugin handle it
         }
     }

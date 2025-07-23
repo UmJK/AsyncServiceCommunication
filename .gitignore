@@ -12,3 +12,6 @@ gradle-app.setting
 *.iws
 .vscode/
 
+
+# Audit logs (generated at runtime)
+authorization_audit.log
