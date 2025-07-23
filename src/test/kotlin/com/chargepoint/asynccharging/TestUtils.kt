@@ -4,10 +4,10 @@ import com.chargepoint.asynccharging.models.requests.ChargingRequest
 
 object TestUtils {
     
-    // Tokens from the actual ACL in AuthorizationServiceImpl
+    // Tokens from the actual ACL in AuthorizationServiceImpl  
     val VALID_ACL_TOKENS = listOf(
         "validDriverToken123",               // Too short for validation but in ACL
-        "ABCD-efgh1234567890_~valid.token", // Perfect - in ACL and valid length
+        "ABCD-efgh1234567890_~valid.token", // Perfect - in ACL and valid length (32 chars)
         "authorizedDriver456",              // Too short for validation but in ACL
         "testDriver789"                     // Too short for validation but in ACL
     )
