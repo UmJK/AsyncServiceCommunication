@@ -14,7 +14,7 @@ This service implements the **official ChargePoint async service communication s
 - **ACL Authorization**: Access Control List validation for driver tokens
 - **Callback Delivery**: Reliable result notification with retry logic
 
-## 🏗️ Architecture
+##  Architecture
 
 This service implements an **async request-response pattern** for EV charging authorization:
 
@@ -210,7 +210,7 @@ open build/reports/jacoco/test/html/index.html
 | Health Monitoring | 3 | Component status checking |
 | End-to-End Workflows | 2 | Complete request processing |
 
-## 🔧 Configuration
+##  Configuration
 
 ### Environment Variables
 
@@ -246,14 +246,14 @@ monitoring {
 }
 ```
 
-## 📈 Performance
+##  Performance
 
 - **API Response Time**: < 10ms (immediate queue submission)
 - **Authorization Processing**: 50-200ms average
 - **Queue Capacity**: 10,000 concurrent requests
 - **Throughput**: 1000+ requests/second
 
-## 🏭 Production Deployment
+##  Production Deployment
 
 ### Health Check Endpoints
 
@@ -268,7 +268,7 @@ The service exposes metrics compatible with:
 - **Grafana** (dashboards for visualization)
 - **AlertManager** (automated alerting)
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 AsyncServiceCommunication/
@@ -324,23 +324,23 @@ AsyncServiceCommunication/
 └── README.md                      # This file
 ```
 
-## 🎯 ChargePoint Specification Compliance
+##  ChargePoint Specification Compliance
 
 This service implements **100% of the ChargePoint async service communication specification**:
 
 ###  **Requirements Met**
 
-| **Requirement** | **Implementation** | **Status** |
-|-----------------|-------------------|------------|
-| **Immediate API Response** | Ktor controller with < 10ms response | 
-| **Async Queue Processing** | ArrayBlockingQueue with background processor | 
-| **No Sync Authorization** | Queue-based decoupling, no direct calls |
-| **ACL Authorization** | Hardcoded ACL with configurable tokens | 
-| **Decision Persistence** | CSV audit log (authorization_audit.log) | 
-| **Callback Delivery** | HTTP client with retry logic | 
-| **Timeout to Unknown** | Circuit breaker + timeout handling | 
-| **Input Validation** | UUID, token format, URL validation | 
-| **Response Format** | Exact specification message format | 
+| **Requirement** | **Implementation** 
+|-----------------|-------------------
+| **Immediate API Response** | Ktor controller with < 10ms response 
+| **Async Queue Processing** | ArrayBlockingQueue with background processor  
+| **No Sync Authorization** | Queue-based decoupling, no direct calls 
+| **ACL Authorization** | Hardcoded ACL with configurable tokens 
+| **Decision Persistence** | CSV audit log (authorization_audit.log)  
+| **Callback Delivery** | HTTP client with retry logic  
+| **Timeout to Unknown** | Circuit breaker + timeout handling 
+| **Input Validation** | UUID, token format, URL validation 
+| **Response Format** | Exact specification message format 
 
 ###  **Implementation Highlights**
 - **Immediate Response**: API returns within < 10ms

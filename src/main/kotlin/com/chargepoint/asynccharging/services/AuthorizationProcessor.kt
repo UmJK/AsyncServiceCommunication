@@ -35,7 +35,7 @@ class AuthorizationProcessor(
                         // Authorize the request
                         val decision = authorizationService.authorize(request)
                         
-                        // 🚨 SPECIFICATION REQUIREMENT: Persist decision for debugging
+                        //  SPECIFICATION REQUIREMENT: Persist decision for debugging
                         auditService.logDecision(request, decision)
                         
                         // Send callback with original driver token
